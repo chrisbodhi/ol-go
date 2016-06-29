@@ -77,41 +77,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func BusinessHandler(w http.ResponseWriter, r *http.Request) {
-	businesses := Businesses{
-		Business{Name: "Fiduciary Planners"},
-		Business{Name: "Jokes on Us"},
-	}
-	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	businesses, err := AllBusinesses()
 	if err != nil {
 		panic(err)
-	}
-
-	rows, err := db.Query("SELECT * FROM businesses WHERE id < 5")
-	if err != nil {
-		panic(err)
-	}
-
-	for rows.Next() {
-		var id sql.NullInt64
-		var uuid sql.NullString
-		var name sql.NullString
-		var address sql.NullString
-		var address2 sql.NullString
-		var city sql.NullString
-		var state sql.NullString
-		var zip sql.NullString
-		var country sql.NullString
-		var phone sql.NullString
-		var website sql.NullString
-		var created_at sql.NullString
-		var updated_at sql.NullString
-
-		if err := rows.Scan(&id, &uuid, &name, &address, &address2, &city, &state, &zip, &country, &phone, &website, &created_at, &updated_at); err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("ID %d with website %s & name %s zip code %s\n",
-			id.Int64, website.String, name.String, zip.String)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -150,8 +118,6 @@ type Business struct {
 
 type Businesses []Business
 
-// Database funny business
-
 // Logger
 func Logger(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -167,4 +133,34 @@ func Logger(inner http.Handler, name string) http.Handler {
 			time.Since(start),
 		)
 	})
+}
+
+// Database funny business
+func AllBusinesses() ([]*Business, error) {
+	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err := db.Query("SELECT * FROM businesses WHERE id < 5")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	businesses := make([]*Business, 0)
+	for rows.Next() {
+		biz := new(Business)
+		err := rows.Scan(&biz.Id, &biz.Uuid, &biz.Name, &biz.Address, &biz.Address2, &biz.City, &biz.State, &biz.Zip, &biz.Country, &biz.Phone, &biz.Website, &biz.CreatedAt, &biz.UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+		businesses = append(businesses, biz)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return businesses, nil
 }
