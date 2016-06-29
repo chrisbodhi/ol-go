@@ -105,7 +105,7 @@ type Business struct {
 	Uuid      string    `json:"uuid"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
-	Address2  string    `json:"address2"`
+	Address2  *string   `json:"address2"`
 	City      string    `json:"city"`
 	State     string    `json:"state"`
 	Zip       string    `json:"zip"`
