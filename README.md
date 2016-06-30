@@ -14,6 +14,7 @@ _Possible downside of Go's name: lazy jokes are too easy!_
 - Visit [localhost:8080/api/businesses/42](http://localhost:8080/api/businesses/42) to get your param returned.
 
 ###todo
-- add a db and a way to talk to it _[oh, it that all?]_
+- ~add a db and a way to talk to it _[oh, it that all?]_~ _completed Wed Jun 29 17:05_
+- paginate the results
 
-![one day, i'll be well-balanced with go](https://media.giphy.com/media/67rLnLxPbC7VS/giphy.gif)
+![one day, i'll be as well-balanced with go](https://media.giphy.com/media/67rLnLxPbC7VS/giphy.gif)
