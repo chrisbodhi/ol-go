@@ -96,7 +96,35 @@ func IdHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	businessId := vars["businessId"]
-	fmt.Fprintln(w, "businessId:", businessId)
+
+	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	if err != nil {
+		panic(err)
+	}
+
+	row, err := db.Query("SELECT * FROM businesses WHERE id=" + businessId)
+	if err != nil {
+		panic(err)
+	}
+	defer row.Close()
+
+	business := new(Business)
+	for row.Next() {
+		biz := new(Business)
+		err := row.Scan(&biz.Id, &biz.Uuid, &biz.Name, &biz.Address, &biz.Address2, &biz.City, &biz.State, &biz.Zip, &biz.Country, &biz.Phone, &biz.Website, &biz.CreatedAt, &biz.UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+		business = biz
+	}
+
+	if err = row.Err(); err != nil {
+		panic(err)
+	}
+
+	if err := json.NewEncoder(w).Encode(business); err != nil {
+		panic(err)
+	}
 }
 
 // Model
@@ -142,7 +170,7 @@ func AllBusinesses() ([]*Business, error) {
 		panic(err)
 	}
 
-	rows, err := db.Query("SELECT * FROM businesses WHERE id < 5")
+	rows, err := db.Query("SELECT * FROM businesses WHERE id < 50")
 	if err != nil {
 		panic(err)
 	}
