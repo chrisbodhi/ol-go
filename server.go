@@ -7,6 +7,7 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -55,6 +56,7 @@ var routes = Routes{
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
+
 	for _, route := range routes {
 		var handler http.Handler
 
@@ -77,13 +79,20 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func BusinessHandler(w http.ResponseWriter, r *http.Request) {
-	businesses, err := AllBusinesses()
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	var page string
+	if len(r.URL.Query()["page"]) > 0 {
+		page = r.URL.Query()["page"][0]
+	} else {
+		page = "1"
+	}
+
+	businesses, err := AllBusinesses(page)
 	if err != nil {
 		panic(err)
 	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(businesses); err != nil {
 		panic(err)
@@ -164,13 +173,18 @@ func Logger(inner http.Handler, name string) http.Handler {
 }
 
 // Database funny business
-func AllBusinesses() ([]*Business, error) {
+func AllBusinesses(page string) ([]*Business, error) {
 	db, err := sql.Open("sqlite3", "./db.sqlite3")
 	if err != nil {
 		panic(err)
 	}
 
-	rows, err := db.Query("SELECT * FROM businesses WHERE id < 50")
+	pageNum, err := strconv.Atoi(page)
+	idStart := pageNum * 50
+	idEnd := (pageNum * 50) + 50
+	sqlQuery := "SELECT * FROM businesses WHERE id >= " + strconv.Itoa(idStart) + " AND id < " + strconv.Itoa(idEnd)
+
+	rows, err := db.Query(sqlQuery)
 	if err != nil {
 		panic(err)
 	}
